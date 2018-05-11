@@ -1,4 +1,8 @@
 import cv2
 
-if __name__ == '__main__':
-	print(cv2.__version__)
+cap = cv2.VideoCapture(0)
+print(cap.isOpened())
+while(True):
+    ret, frame = cap.read()
+    cv2.imshow('frame', frame)
+    cv2.waitKey(10)
