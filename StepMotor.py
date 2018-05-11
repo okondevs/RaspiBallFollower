@@ -22,8 +22,12 @@ Todo:
 import pigpio
 import time
 
-FORWARD = 2 	#can be 1 or 2
-BACKWARD = -1	#can be -1 or -2
+
+FORWARD = 1
+BACKWARD = -1
+HALF_STEP = 1
+FULL_STEP = 2
+
 
 class StepMotor:
 	"""Controls stepper motor"""
@@ -62,8 +66,9 @@ class StepMotor:
 				 [0, 0, 1, 1],
 				 [0, 0, 0, 1],]
 		self.step_count = len(self.sequence)
-		self.direction = FORWARD
-
+		self.step_direction = FORWARD
+		self.step_speed = HALF_STEP
+		self.steps_counter = 0
 
 	def _calculate_steps(self, angle):
 		""" Private method used for calculate number of steps
@@ -89,61 +94,88 @@ class StepMotor:
 			steps (int): Number of steps to perform.
 
 		"""
-		for i in range(0, steps):
+		print(self.step_speed)
+		if self.step_speed == FULL_STEP:
+			if (self.steps_counter % 8) % 2 != 0:
+				self.steps_counter += 1
+		counter = 0
+		while counter < steps and counter > -steps:
 			for pin in range(0, 4):
-				if self.sequence[i % 8][pin] != 0:
+				if self.sequence[self.steps_counter % 8][pin] != 0:
 					self.pi.write(self.step_pins[pin], True)
 				else:
 					self.pi.write(self.step_pins[pin], False)
 			time.sleep(0.001)
+			self.steps_counter += self.step_direction * self.step_speed
+			counter += self.step_direction
 
 
-	def move_forward_for_angle(self, angle):
+	def _set_speed(self, func_dictionary):
+		"""Sets motor speed according dictionary value obtained from kwargs of calling method
+
+		"""
+		if 'speed' in func_dictionary:
+			self.step_speed = func_dictionary['speed']
+			print("siemka")
+		else:
+			self.step_speed = HALF_STEP
+
+
+	def move_forward_for_angle(self, angle, **kwargs):
 		""" Turns motor forward for given angle
 
 		Args:
 			angle (int): angle in degrees
 
 		"""
-		self.move_forward(self._calculate_steps(angle))
+		self._set_speed(kwargs)
+		self.step_direction = FORWARD
+		self._move(self._calculate_steps(angle))
 
 
-	def move_backward_for_angle(self, angle):
+	def move_backward_for_angle(self, angle, **kwargs):
 		""" Turns motor backward for given angle
 
 		Args:
 			angle (int): angle in degrees
 
 		"""
-		self.move_backward(self._calculate_steps(angle))
+		self._set_speed(kwargs)
+		self.step_direction = BACKWARD
+		self._move(self._calculate_steps(angle))
 
 
-	def move_forward(self, steps):
+	def move_forward(self, steps, **kwargs):
 		""" Turns motor forward for given steps
 
 		Args:
 			steps (int): number of steps
 
 		"""
-		self.direction = FORWARD
+		self._set_speed(kwargs)
+		self.step_direction = FORWARD
 		self._move(steps)
 
 
-	def move_backward(self, steps):
+	def move_backward(self, steps, **kwargs):
 		""" Turns motor backward for given steps
 
 		Args:
 			steps (int): number of steps
 
 		"""
-		self.direction = BACKWARD
+		self._set_speed(kwargs)
+		self.step_direction = BACKWARD
 		self._move(steps)
 
 
 
 if __name__ == "__main__":
 	sm = StepMotor(12, 16, 20, 21)
-	sm.move_forward(4076)
-	sm.move_backward(4076)
+	sm.move_forward(4076, speed=FULL_STEP)
+	print("------------------")
+	sm.move_backward(4076, speed=FULL_STEP)
+	print("------------------")
 	sm.move_forward_for_angle(360)
-	sm.move_backward_for_angle(360)
+	print("------------------")
+	sm.move_backward_for_angle(360, speed=FULL_STEP)
