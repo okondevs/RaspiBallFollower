@@ -1,22 +1,23 @@
 """
-This module is handler for 28BJY-48 stepper motor with ULN2003 driverself.
+This module is handler for 28BJY-48 stepper motor with ULN2003 driver.
 Contains class: StepMotor which can be used for controlling motor.
 
-28BJY-48 motor needs 4076 steps for full revolution in half-step mode.
+28BJY-48 motor in half-step mode needs 4076 steps for full revolution, 
+			   in full-step mode needs 2038 steps for full revolution.
 
 Example:
 	You can test this class by running module.
 	It uses 12, 16, 20, 21 GPIO PINS to control driver.
-	Steppper motor should do one full revolution.
+	Steppper motor should do one full revolution in full-step mode.
 
 		$ python StepMotor.py
 
 Atributes:
-	FORWARD (int):	Represents direction of stepper motor movement.
-	BACKWARD (int): Represents direction of stepper motor movement.
+	FORWARD (int):		Represents direction of stepper motor movement.
+	BACKWARD (int): 	Represents direction of stepper motor movement.
+	HALF_STEP (int):	Stepper motor slower mode.
+	FULL_STEP (int):	Stepper motor faster mode.
 
-Todo:
-	* Full-step mode handling
 """
 
 import pigpio
@@ -33,8 +34,11 @@ class StepMotor:
 	"""Controls stepper motor"""
 
 	def __init__(self, out1, out2, out3, out4, **kwargs):
-		"""Method initializes needed arrays and creates connection
-		   with appropriate Raspberry Pi through pigpio.
+		"""Method initializes needed arrays, creates connection
+		   with appropriate Raspberry Pi through pigpio and
+		   prepares GPIO pins for work with ULN2003 driver.
+
+		Method sets by default HALF_STEP speed and FORWARD direction
 
 		Args:
 			out1 (int): First stepper motor driver PIN.
@@ -70,9 +74,10 @@ class StepMotor:
 		self.step_speed = HALF_STEP
 		self.steps_counter = 0
 
+
 	def _calculate_steps(self, angle):
 		""" Private method used for calculate number of steps
-			according to given steps.
+			according to given angle.
 
 		Args:
 			angle (int): Angle in degrees.
@@ -81,8 +86,12 @@ class StepMotor:
 			int: Number of steps.
 
 		"""
-		steps = int(4076 * (angle / 360))
-		print(steps)
+		if self.step_speed == FULL_STEP:
+			revolution_count = 2038
+		elif self.step_speed == HALF_STEP:
+			revolution_count = 4076
+
+		steps = int(revolution_count * (angle / 360))
 		return steps
 
 
@@ -94,7 +103,6 @@ class StepMotor:
 			steps (int): Number of steps to perform.
 
 		"""
-		print(self.step_speed)
 		if self.step_speed == FULL_STEP:
 			if (self.steps_counter % 8) % 2 != 0:
 				self.steps_counter += 1
@@ -105,7 +113,8 @@ class StepMotor:
 					self.pi.write(self.step_pins[pin], True)
 				else:
 					self.pi.write(self.step_pins[pin], False)
-			time.sleep(0.001)
+
+			time.sleep(0.0015)
 			self.steps_counter += self.step_direction * self.step_speed
 			counter += self.step_direction
 
@@ -113,10 +122,12 @@ class StepMotor:
 	def _set_speed(self, func_dictionary):
 		"""Sets motor speed according dictionary value obtained from kwargs of calling method
 
+		Args:
+			func_dictionary: Dictionary which should have 'speed' key.
+				Used for set proper motor speed.
 		"""
 		if 'speed' in func_dictionary:
 			self.step_speed = func_dictionary['speed']
-			print("siemka")
 		else:
 			self.step_speed = HALF_STEP
 
@@ -125,7 +136,9 @@ class StepMotor:
 		""" Turns motor forward for given angle
 
 		Args:
-			angle (int): angle in degrees
+			angle (int): Angle in degrees.
+			**kwargs: speed
+				speed (int): Represents expected motor speed.
 
 		"""
 		self._set_speed(kwargs)
@@ -134,10 +147,12 @@ class StepMotor:
 
 
 	def move_backward_for_angle(self, angle, **kwargs):
-		""" Turns motor backward for given angle
+		""" Turns motor backward for given angle.
 
 		Args:
 			angle (int): angle in degrees
+			**kwargs: speed
+				speed (int): Represents expected motor speed.
 
 		"""
 		self._set_speed(kwargs)
@@ -150,6 +165,8 @@ class StepMotor:
 
 		Args:
 			steps (int): number of steps
+			**kwargs: speed
+				speed (int): Represents expected motor speed.
 
 		"""
 		self._set_speed(kwargs)
@@ -162,8 +179,10 @@ class StepMotor:
 
 		Args:
 			steps (int): number of steps
+			**kwargs: speed
+				speed (int): Represents expected motor speed.
 
-		"""
+	"""
 		self._set_speed(kwargs)
 		self.step_direction = BACKWARD
 		self._move(steps)
@@ -172,10 +191,4 @@ class StepMotor:
 
 if __name__ == "__main__":
 	sm = StepMotor(12, 16, 20, 21)
-	sm.move_forward(4076, speed=FULL_STEP)
-	print("------------------")
-	sm.move_backward(4076, speed=FULL_STEP)
-	print("------------------")
-	sm.move_forward_for_angle(360)
-	print("------------------")
-	sm.move_backward_for_angle(360, speed=FULL_STEP)
+	sm.move_forward(2038, speed=FULL_STEP)
