@@ -1,4 +1,4 @@
 There is problem after installation pip package with opencv on fresh raspbian system.
 To fix this you must do:
-sudo apt-get install libatlas-base-dev libjasper-dev libqtgui4 libqt4-test
+sudo apt-get install libatlas-base-dev libjasper-dev libqtgui4 libqt4-test libhdf5-dev libhdf5-serial-dev
 After this "import cv2 should work"
