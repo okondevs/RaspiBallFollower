@@ -2,3 +2,7 @@ There is problem after installation pip package with opencv on fresh raspbian sy
 To fix this you must do:
 sudo apt-get install libatlas-base-dev libjasper-dev libqtgui4 libqt4-test libhdf5-dev libhdf5-serial-dev
 After this "import cv2 should work"
+
+If you want use dedicated camera for raspberry pi remember to run 
+sudo modprobe bcm2835-v4l2
+Without run this script, Raspbian can't find/open device
