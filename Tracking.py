@@ -1,6 +1,41 @@
+"""
+This module contain algorithms to find and 
+track object ( in this version is orange/red ball) 
+
+Using:
+	$  python3 Tracking.py
+"""
+
 import cv2
 import numpy as np
 
+class Tracking:
+	""" Find and track ball """
+	
+	tracker_types = ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'GOTURN']
+	
+	def __init__ (self, tracker_types, minSize, maxSize):
+		""" Create type of tracking and set size of this object
+		
+			Args:
+				tracker_types: type of tracking methods
+				minSize: minimal size of object which will be tracking
+				maxSize: maximal size of object which will be tracking
+		"""	
+		if tracker_type == 'BOOSTING':
+			tracker = cv2.TrackerBoosting_create()
+		if tracker_type == 'MIL':
+			tracker = cv2.TrackerMIL_create()
+		if tracker_type == 'KCF':
+			tracker = cv2.TrackerKCF_create()
+		if tracker_type == 'TLD':
+			tracker = cv2.TrackerTLD_create()
+		if tracker_type == 'MEDIANFLOW':
+			tracker = cv2.TrackerMedianFlow_create()
+		if tracker_type == 'GOTURN':
+			tracker = cv2.TrackerGOTURN_create()
+	
+	
 params = cv2.SimpleBlobDetector_Params()
 params.filterByArea = True
 params.minArea = 800
