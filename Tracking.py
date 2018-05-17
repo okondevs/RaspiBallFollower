@@ -199,21 +199,21 @@ class SimpleBlobDetector:
 		self.detector = cv2.SimpleBlobDetector_create(self.params)
 
 
-		def detect_object(self, frame):
-			""" Find object with given parameters
+	def detect_object(self, frame):
+		""" Find object with given parameters
 
-			Args:
-				frame: image which will be analysed
+		Args:
+			frame: image which will be analysed
 
-			Return keypoints with detected object
+		Return keypoints with detected object
 
-			"""
-			a, b, c = cv2.split(frame)
-			ret,thresh1 = cv2.threshold(c,90,255,cv2.THRESH_BINARY)
-			kernel = np.ones((5,5),np.uint8)
-			thresh1 = cv2.erode(thresh1,kernel,iterations = 2)
-			keypoints = self.detector.detect(thresh1)
-			return keypoints
+		"""
+		a, b, c = cv2.split(frame)
+		ret,thresh1 = cv2.threshold(c,90,255,cv2.THRESH_BINARY)
+		kernel = np.ones((5,5),np.uint8)
+		thresh1 = cv2.erode(thresh1,kernel,iterations = 2)
+		keypoints = self.detector.detect(thresh1)
+		return keypoints
 
 
 
@@ -226,7 +226,7 @@ if __name__ == "__main__":
 		cap.init_auto_balance()
 		tracker = Tracking()
 		ret, frame = cap.read()
-		detector.detect_object(frame)
+		keypoints = detector.detect_object(frame)
 		boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
 		tracker.init_track_object(frame, boxObject)
 		while(True):
