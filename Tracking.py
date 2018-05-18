@@ -8,8 +8,8 @@ Using:
 
 import cv2
 import numpy as np
-from StepMotor import StepMotor
-from Servo import Servo
+from StepMotor import *
+from Servo import *
 
 class Tracking:
 	""" Find and track ball """
@@ -153,7 +153,7 @@ class SimpleBlobDetector:
 		if "minArea" in kwargs:
 			self.params.minArea = kwargs['minArea']
 		else:
-			self.params.minArea = 100
+			self.params.minArea = 20
 		if "maxArea" in kwargs:
 			self.params.maxArea = kwargs['maxArea']
 		else:
@@ -173,15 +173,15 @@ class SimpleBlobDetector:
 		if "filterByCircularity" in kwargs:
 			self.params.filterByCircularity = kwargs['filterByCircularity']
 		else:
-			self.params.filterByCircularity  = False
+			self.params.filterByCircularity  = True
 		if "minCircularity" in kwargs:
 			self.params.minCircularity = kwargs['minCircularity']
 		else:
-			self.params.minCircularity = 0
+			self.params.minCircularity = 0.6
 		if "maxCircularity" in kwargs:
 			self.params.maxCircularity = kwargs['maxCircularity']
 		else:
-			self.params.maxCircularity = 0
+			self.params.maxCircularity = 1
 		if "filterByConvexity" in kwargs:
 			self.params.filterByConvexity = kwargs['filterByConvexity']
 		else:
@@ -220,22 +220,48 @@ class SimpleBlobDetector:
 if __name__ == "__main__":
 
 	cap = Camera(0)
-	detector = SimpleBlobDetector()
-
+	cap.set_resolution(640,480)
+	
 	if cap.isOpened():
+		detector = SimpleBlobDetector()
+		sm = StepMotor(12, 16, 20, 21)
 		cap.init_auto_balance()
 		tracker = Tracking()
 		ret, frame = cap.read()
 		keypoints = detector.detect_object(frame)
-		boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
-		tracker.init_track_object(frame, boxObject)
-		while(True):
-			ret, frame = cap.read()
-			ok, boxObject = tracker.tracker_update(frame)
-			p1 = (int(boxObject[0]), int(boxObject[1]))
-			p2 = (int(boxObject[0] + boxObject[2]), int(boxObject[1] + boxObject[3]))
-			cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
-			cv2.imshow('frame', frame)
-			cv2.waitKey(10)
+		if len(keypoints) > 0:
+			boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+			tracker.init_track_object(frame, boxObject)
+			while(True):
+				ret, frame = cap.read()
+				a, b, c = cv2.split(frame)
+				ok, boxObject = tracker.tracker_update(frame)
+				p1 = (int(boxObject[0]), int(boxObject[1]))
+				p2 = (int(boxObject[0] + boxObject[2]), int(boxObject[1] + boxObject[3]))
+				if ok == True:
+					if p1[0] < 150:
+						sm.move_backward(20, speed=FULL_STEP)
+						ret, frame = cap.read()
+						keypoints = detector.detect_object(frame)
+						if len(keypoints) > 0:
+							boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+							tracker.init_track_object(frame, boxObject)
+					if (p1[0] + 60) > 500:
+						sm.move_forward(20, speed=FULL_STEP)
+						ret, frame = cap.read()
+						keypoints = detector.detect_object(frame)
+						if len(keypoints) > 0:
+							boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+							tracker.init_track_object(frame, boxObject)
+					if len(keypoints) > 0:
+						cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
+						cv2.imshow('frame', frame)
+						cv2.waitKey(10)
+				else:
+					ret, frame = cap.read()
+					keypoints = detector.detect_object(frame)
+					if len(keypoints) > 0:
+						boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+						tracker.init_track_object(frame, boxObject)
 	else:
 		print("Camera not opened")
