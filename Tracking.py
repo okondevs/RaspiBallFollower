@@ -71,6 +71,18 @@ class Tracking:
 		return boxObject, p1, p2
 
 
+	def re_init(self, keypoints, frame):
+		"""	Init tracking object, after move camera -- not working yet
+		
+		Args:
+			keypoints (point): coordinate tracked object
+			frame : frame which contain tracked object
+		"""
+		self.tracker = Tracking()
+		boxObject, p1, p2 = self.tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+		self.tracker.init_track_object(frame, boxObject)
+
+
 class Camera:
 	""" Control camera """
 
@@ -247,6 +259,7 @@ if __name__ == "__main__":
 							ret, frame = cap.read()
 							keypoints = detector.detect_object(frame)
 							if len(keypoints) > 0:
+								#tracker.re_init(keypoints, frame)
 								tracker = Tracking()
 								boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
 								tracker.init_track_object(frame, boxObject)
@@ -255,6 +268,7 @@ if __name__ == "__main__":
 							ret, frame = cap.read()
 							keypoints = detector.detect_object(frame)
 							if len(keypoints) > 0:
+								#tracker.re_init(keypoints, frame)
 								tracker = Tracking()
 								boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
 								tracker.init_track_object(frame, boxObject)
@@ -266,6 +280,7 @@ if __name__ == "__main__":
 						ret, frame = cap.read()
 						keypoints = detector.detect_object(frame)
 						if len(keypoints) > 0:
+							#tracker.re_init(keypoints, frame)
 							tracker = Tracking()
 							boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
 							tracker.init_track_object(frame, boxObject)
