@@ -157,7 +157,7 @@ class SimpleBlobDetector:
 		if "maxArea" in kwargs:
 			self.params.maxArea = kwargs['maxArea']
 		else:
-			self.params.maxArea = 99999999
+			self.params.maxArea = 5000
 		if "filterByInertia" in kwargs:
 			self.params.filterByInertia = kwargs['filterByInertia']
 		else:
@@ -177,7 +177,7 @@ class SimpleBlobDetector:
 		if "minCircularity" in kwargs:
 			self.params.minCircularity = kwargs['minCircularity']
 		else:
-			self.params.minCircularity = 0.6
+			self.params.minCircularity = 0.7
 		if "maxCircularity" in kwargs:
 			self.params.maxCircularity = kwargs['maxCircularity']
 		else:
@@ -209,10 +209,12 @@ class SimpleBlobDetector:
 
 		"""
 		a, b, c = cv2.split(frame)
-		ret,thresh1 = cv2.threshold(c,90,255,cv2.THRESH_BINARY)
+		ret,thresh1 = cv2.threshold(c,140,255,cv2.THRESH_BINARY)
 		kernel = np.ones((5,5),np.uint8)
 		thresh1 = cv2.erode(thresh1,kernel,iterations = 2)
 		keypoints = self.detector.detect(thresh1)
+		cv2.imshow('thresh', thresh1)
+		cv2.waitKey(10)
 		return keypoints
 
 
@@ -223,45 +225,49 @@ if __name__ == "__main__":
 	cap.set_resolution(640,480)
 	
 	if cap.isOpened():
-		detector = SimpleBlobDetector()
-		sm = StepMotor(12, 16, 20, 21)
-		cap.init_auto_balance()
-		tracker = Tracking()
-		ret, frame = cap.read()
-		keypoints = detector.detect_object(frame)
-		if len(keypoints) > 0:
-			boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
-			tracker.init_track_object(frame, boxObject)
-			while(True):
-				ret, frame = cap.read()
-				a, b, c = cv2.split(frame)
-				ok, boxObject = tracker.tracker_update(frame)
-				p1 = (int(boxObject[0]), int(boxObject[1]))
-				p2 = (int(boxObject[0] + boxObject[2]), int(boxObject[1] + boxObject[3]))
-				if ok == True:
-					if p1[0] < 150:
-						sm.move_backward(20, speed=FULL_STEP)
-						ret, frame = cap.read()
-						keypoints = detector.detect_object(frame)
-						if len(keypoints) > 0:
-							boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
-							tracker.init_track_object(frame, boxObject)
-					if (p1[0] + 60) > 500:
-						sm.move_forward(20, speed=FULL_STEP)
-						ret, frame = cap.read()
-						keypoints = detector.detect_object(frame)
-						if len(keypoints) > 0:
-							boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
-							tracker.init_track_object(frame, boxObject)
-					if len(keypoints) > 0:
-						cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
-						cv2.imshow('frame', frame)
-						cv2.waitKey(10)
-				else:
+		while(True):
+			detector = SimpleBlobDetector()
+			sm = StepMotor(12, 16, 20, 21)
+			cap.init_auto_balance()
+			tracker = Tracking()
+			ret, frame = cap.read()
+			keypoints = detector.detect_object(frame)
+			if len(keypoints) > 0:
+				boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+				tracker.init_track_object(frame, boxObject)
+				while(True):
 					ret, frame = cap.read()
-					keypoints = detector.detect_object(frame)
-					if len(keypoints) > 0:
-						boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
-						tracker.init_track_object(frame, boxObject)
+					a, b, c = cv2.split(frame)
+					ok, boxObject = tracker.tracker_update(frame)
+					p1 = (int(boxObject[0]), int(boxObject[1]))
+					p2 = (int(boxObject[0] + boxObject[2]), int(boxObject[1] + boxObject[3]))
+					if ok == True:
+						if p1[0] < 150:
+							sm.move_backward(20, speed=FULL_STEP)
+							ret, frame = cap.read()
+							keypoints = detector.detect_object(frame)
+							if len(keypoints) > 0:
+								tracker = Tracking()
+								boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+								tracker.init_track_object(frame, boxObject)
+						if (p1[0] + 60) > 500:
+							sm.move_forward(20, speed=FULL_STEP)
+							ret, frame = cap.read()
+							keypoints = detector.detect_object(frame)
+							if len(keypoints) > 0:
+								tracker = Tracking()
+								boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+								tracker.init_track_object(frame, boxObject)
+						if len(keypoints) > 0:
+							cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
+							cv2.imshow('frame', frame)
+							cv2.waitKey(10)
+					else:
+						ret, frame = cap.read()
+						keypoints = detector.detect_object(frame)
+						if len(keypoints) > 0:
+							tracker = Tracking()
+							boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+							tracker.init_track_object(frame, boxObject)
 	else:
 		print("Camera not opened")
