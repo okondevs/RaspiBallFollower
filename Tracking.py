@@ -38,7 +38,7 @@ class Tracking:
 			objectArea (rectangle): area of frame which contain object to track
 
 		"""
-		self.tracker.init(frame, boxObject)
+		self.tracker.init(frame, objectArea)
 
 
 	def tracker_update (self, frame):
@@ -72,15 +72,15 @@ class Tracking:
 
 
 	def re_init(self, keypoints, frame):
-		"""	Init tracking object, after move camera -- not working yet
+		"""	Init tracking object, after move camera 
 		
 		Args:
 			keypoints (point): coordinate tracked object
 			frame : frame which contain tracked object
 		"""
-		self.tracker = Tracking()
-		boxObject, p1, p2 = self.tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
-		self.tracker.init_track_object(frame, boxObject)
+		self.__init__()
+		boxObject, p1, p2 = self.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
+		self.init_track_object(frame, boxObject)
 
 
 class Camera:
@@ -259,19 +259,13 @@ if __name__ == "__main__":
 							ret, frame = cap.read()
 							keypoints = detector.detect_object(frame)
 							if len(keypoints) > 0:
-								#tracker.re_init(keypoints, frame)
-								tracker = Tracking()
-								boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
-								tracker.init_track_object(frame, boxObject)
+								tracker.re_init(keypoints, frame)
 						if (p1[0] + 60) > 500:
 							sm.move_forward(20, speed=FULL_STEP)
 							ret, frame = cap.read()
 							keypoints = detector.detect_object(frame)
 							if len(keypoints) > 0:
-								#tracker.re_init(keypoints, frame)
-								tracker = Tracking()
-								boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
-								tracker.init_track_object(frame, boxObject)
+								tracker.re_init(keypoints, frame)
 						if len(keypoints) > 0:
 							cv2.rectangle(frame, p1, p2, (255,0,0), 2, 1)
 							cv2.imshow('frame', frame)
@@ -280,9 +274,6 @@ if __name__ == "__main__":
 						ret, frame = cap.read()
 						keypoints = detector.detect_object(frame)
 						if len(keypoints) > 0:
-							#tracker.re_init(keypoints, frame)
-							tracker = Tracking()
-							boxObject, p1, p2 = tracker.calculate_area(keypoints[0].pt[0]-30, keypoints[0].pt[1]-30 , 60 , 60)
-							tracker.init_track_object(frame, boxObject)
+							tracker.re_init(keypoints, frame)
 	else:
 		print("Camera not opened")
